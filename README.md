@@ -8,6 +8,8 @@ A pretty, playable, web-based 3D arcade flapping game. It reimagines the classic
 
 Open the link in a modern browser with WebGL enabled. No install required.
 
+> If the page is not live yet, enable GitHub Pages once: repo **Settings → Pages → Build and deployment → Source: GitHub Actions**, then re-run the [Deploy to GitHub Pages](https://github.com/ktuladhar/3d-super-bird/actions/workflows/deploy-pages.yml) workflow.
+
 ## Getting started
 
 1. Open `index.html` in a modern browser (Chrome, Edge, Firefox, or Safari).
