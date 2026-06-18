@@ -653,6 +653,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = GameLogi
 
   /* ---------- resize / orientation ---------- */
   var baseCam = { x: -2.2, y: 4.3, z: 13.5, fov: 55, lookX: 1.6, lookY: 4.4 };
+  var camAnimY = baseCam.y;
 
   function viewportSize() {
     var vv = window.visualViewport;
@@ -670,21 +671,26 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = GameLogi
     camera.aspect = aspect;
 
     if (aspect < 0.72) {
-      camera.fov = 62;
-      camera.position.set(baseCam.x, baseCam.y + 0.15, baseCam.z + 1.8);
-      camera.lookAt(new THREE.Vector3(baseCam.lookX, baseCam.lookY + 0.1, 0));
+      /* narrow portrait: pan view left so bird at x=-3 stays in frame */
+      camera.fov = 60;
+      camera.position.set(0.4, baseCam.y + 0.12, baseCam.z + 2.4);
+      camera.lookAt(new THREE.Vector3(-0.5, baseCam.lookY + 0.08, 0));
+      camAnimY = baseCam.y + 0.12;
     } else if (aspect < 0.9) {
-      camera.fov = 58;
-      camera.position.set(baseCam.x, baseCam.y, baseCam.z + 0.8);
-      camera.lookAt(new THREE.Vector3(baseCam.lookX, baseCam.lookY, 0));
+      camera.fov = 56;
+      camera.position.set(0.1, baseCam.y, baseCam.z + 1.4);
+      camera.lookAt(new THREE.Vector3(0.2, baseCam.lookY, 0));
+      camAnimY = baseCam.y;
     } else if (aspect > 1.55) {
       camera.fov = 50;
       camera.position.set(baseCam.x, baseCam.y - 0.15, baseCam.z - 0.6);
       camera.lookAt(new THREE.Vector3(baseCam.lookX, baseCam.lookY - 0.1, 0));
+      camAnimY = baseCam.y - 0.15;
     } else {
       camera.fov = baseCam.fov;
       camera.position.set(baseCam.x, baseCam.y, baseCam.z);
       camera.lookAt(new THREE.Vector3(baseCam.lookX, baseCam.lookY, 0));
+      camAnimY = baseCam.y;
     }
     camera.updateProjectionMatrix();
 
@@ -751,7 +757,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = GameLogi
       if (cl.position.x < -30) cl.position.x = 34;
     }
     updatePuffs(d);
-    if (!reduceMotion) camera.position.y = 4.3 + Math.sin(now * 0.0006) * 0.06;
+    if (!reduceMotion) camera.position.y = camAnimY + Math.sin(now * 0.0006) * 0.06;
 
     renderer.render(scene, camera);
     requestAnimationFrame(frame);
