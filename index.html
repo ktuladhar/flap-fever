@@ -99,14 +99,6 @@
     #gameover .panel .num { font-size: clamp(32px, 10vh, 52px); }
     #gameover .retry { margin-top: 0; font-size: clamp(14px, 3.5vh, 17px); }
   }
-  @media (max-width: 520px), (max-aspect-ratio: 9/16) {
-    #title-card {
-      align-items: flex-start;
-      padding-left: max(22vw, calc(var(--safe-left) + 72px));
-      text-align: left;
-    }
-    #title-card .sub { text-align: left; }
-  }
   @media (max-width: 360px) {
     #title-card h1 { letter-spacing: 0; }
     #gameover .panel .best { font-size: 14px; }
@@ -639,10 +631,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = GameLogi
       if (canRestart) startOver();
       return;
     }
-    if (state.status === 'ready') {
-      ui.title.style.display = 'none';
-      bird.position.x = C.BIRD_X;
-    }
+    if (state.status === 'ready') ui.title.style.display = 'none';
     GameLogic.flap(state);
     sfx.flap();
     spawnPuffs();
@@ -664,21 +653,11 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = GameLogi
 
   /* ---------- resize / orientation ---------- */
   var baseCam = { x: -2.2, y: 4.3, z: 13.5, fov: 55, lookX: 1.6, lookY: 4.4 };
-  var playCam = { fov: 55, px: baseCam.x, py: baseCam.y, pz: baseCam.z, lx: baseCam.lookX, ly: baseCam.lookY };
-  var titleCam = null;
-  var mobileTitleLayout = false;
 
   function viewportSize() {
     var vv = window.visualViewport;
     if (vv) return { w: Math.round(vv.width), h: Math.round(vv.height), vv: vv };
     return { w: window.innerWidth, h: window.innerHeight, vv: null };
-  }
-
-  function applyCamera(cam) {
-    camera.fov = cam.fov;
-    camera.position.set(cam.px, cam.py, cam.pz);
-    camera.lookAt(new THREE.Vector3(cam.lx, cam.ly, 0));
-    camera.updateProjectionMatrix();
   }
 
   function fitLayout() {
@@ -690,42 +669,24 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = GameLogi
     renderer.setSize(w, h, false);
     camera.aspect = aspect;
 
-    mobileTitleLayout = isTouchDevice && aspect < 0.9;
-    titleCam = mobileTitleLayout ? {
-      fov: 52,
-      px: 2.0, py: 4.55, pz: 15.5,
-      lx: 2.4, ly: 4.55
-    } : null;
-
     if (aspect < 0.72) {
-      playCam = {
-        fov: 62,
-        px: baseCam.x, py: baseCam.y + 0.15, pz: baseCam.z + 1.8,
-        lx: baseCam.lookX, ly: baseCam.lookY + 0.1
-      };
+      camera.fov = 62;
+      camera.position.set(baseCam.x, baseCam.y + 0.15, baseCam.z + 1.8);
+      camera.lookAt(new THREE.Vector3(baseCam.lookX, baseCam.lookY + 0.1, 0));
     } else if (aspect < 0.9) {
-      playCam = {
-        fov: 58,
-        px: baseCam.x, py: baseCam.y, pz: baseCam.z + 0.8,
-        lx: baseCam.lookX, ly: baseCam.lookY
-      };
+      camera.fov = 58;
+      camera.position.set(baseCam.x, baseCam.y, baseCam.z + 0.8);
+      camera.lookAt(new THREE.Vector3(baseCam.lookX, baseCam.lookY, 0));
     } else if (aspect > 1.55) {
-      playCam = {
-        fov: 50,
-        px: baseCam.x, py: baseCam.y - 0.15, pz: baseCam.z - 0.6,
-        lx: baseCam.lookX, ly: baseCam.lookY - 0.1
-      };
+      camera.fov = 50;
+      camera.position.set(baseCam.x, baseCam.y - 0.15, baseCam.z - 0.6);
+      camera.lookAt(new THREE.Vector3(baseCam.lookX, baseCam.lookY - 0.1, 0));
     } else {
-      playCam = {
-        fov: baseCam.fov,
-        px: baseCam.x, py: baseCam.y, pz: baseCam.z,
-        lx: baseCam.lookX, ly: baseCam.lookY
-      };
+      camera.fov = baseCam.fov;
+      camera.position.set(baseCam.x, baseCam.y, baseCam.z);
+      camera.lookAt(new THREE.Vector3(baseCam.lookX, baseCam.lookY, 0));
     }
-
-    if (!(mobileTitleLayout && state.status === 'ready')) {
-      applyCamera(playCam);
-    }
+    camera.updateProjectionMatrix();
 
     canvas.style.width = w + 'px';
     canvas.style.height = h + 'px';
@@ -766,17 +727,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = GameLogi
     }
 
     /* bird visuals */
-    if (state.status === 'ready' && mobileTitleLayout) {
-      applyCamera(titleCam);
-      bird.position.x = 0.55;
-      bird.position.y = state.birdY;
-      bird.scale.setScalar(1.15);
-    } else {
-      applyCamera(playCam);
-      bird.position.x = C.BIRD_X;
-      bird.position.y = state.birdY;
-      bird.scale.setScalar(1);
-    }
+    bird.position.y = state.birdY;
     if (state.status === 'dead') {
       if (state.birdY > C.GROUND_Y + C.BIRD_R + 0.01) bird.rotation.z -= 5.5 * d;
     } else {
@@ -800,9 +751,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = GameLogi
       if (cl.position.x < -30) cl.position.x = 34;
     }
     updatePuffs(d);
-    if (!reduceMotion && state.status !== 'ready') {
-      camera.position.y = playCam.py + Math.sin(now * 0.0006) * 0.06;
-    }
+    if (!reduceMotion) camera.position.y = 4.3 + Math.sin(now * 0.0006) * 0.06;
 
     renderer.render(scene, camera);
     requestAnimationFrame(frame);
